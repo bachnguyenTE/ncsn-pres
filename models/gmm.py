@@ -40,10 +40,13 @@ class GMMDistAnneal(object):
 
 
     def log_prob(self, samples, sigma=1):
+        device = samples.device
+        means = self.means.to(device)
+        mix_probs = self.mix_probs.to(device)
         logps = []
-        for i in range(len(self.mix_probs)):
-            logps.append((-((samples - self.means[i]) ** 2).sum(dim=-1) / (2 * sigma ** 2) - 0.5 * np.log(
-                2 * np.pi * sigma ** 2)) + self.mix_probs[i].log())
+        for i in range(len(mix_probs)):
+            logps.append((-((samples - means[i]) ** 2).sum(dim=-1) / (2 * sigma ** 2) - 0.5 * np.log(
+                2 * np.pi * sigma ** 2)) + mix_probs[i].log())
         logp = torch.logsumexp(torch.stack(logps, dim=0), dim=0)
         return logp
 
@@ -73,10 +76,13 @@ class GMMDist(object):
         return torch.randn_like(means) * stds + means
 
     def log_prob(self, samples):
+        device = samples.device
+        means = self.means.to(device)
+        mix_probs = self.mix_probs.to(device)
         logps = []
-        for i in range(len(self.mix_probs)):
-            logps.append((-((samples - self.means[i]) ** 2).sum(dim=-1) / (2 * self.sigma ** 2) - 0.5 * np.log(
-                2 * np.pi * self.sigma ** 2)) + self.mix_probs[i].log())
+        for i in range(len(mix_probs)):
+            logps.append((-((samples - means[i]) ** 2).sum(dim=-1) / (2 * self.sigma ** 2) - 0.5 * np.log(
+                2 * np.pi * self.sigma ** 2)) + mix_probs[i].log())
         logp = torch.logsumexp(torch.stack(logps, dim=0), dim=0)
         return logp
 

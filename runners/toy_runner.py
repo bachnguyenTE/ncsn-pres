@@ -1,4 +1,5 @@
 import logging
+import os
 import torch.optim as optim
 import torch.nn as nn
 from torch.distributions import Normal
@@ -217,12 +218,16 @@ class ToyRunner():
 
             logging.info('step: {}, loss: {}'.format(step, loss.item()))
 
-        self.visualize(teacher, score, -8, 8, savefig='tmp')
+        if not os.path.exists(self.args.image_folder):
+            os.makedirs(self.args.image_folder)
+        self.visualize(teacher, score, -8, 8, savefig=self.args.image_folder, step=step)
 
     def annealed_sampling_exp(self, left_bound=-8, right_bound=8):
         sns.set(font_scale=1.3)
         sns.set_style('white')
-        savefig = r'/Users/yangsong/Desktop'
+        savefig = self.args.image_folder
+        if not os.path.exists(savefig):
+            os.makedirs(savefig)
 
         teacher = GMMDistAnneal(dim=2)
         mesh = []
@@ -291,3 +296,32 @@ class ToyRunner():
             plt.close()
         else:
             plt.show()
+
+        # Visualize scores for different sigmas
+        grid_size = 20
+        mesh = []
+        x = np.linspace(left_bound, right_bound, grid_size)
+        y = np.linspace(left_bound, right_bound, grid_size)
+        for i in x:
+            for j in y:
+                mesh.append(np.asarray([i, j]))
+
+        mesh = np.stack(mesh, axis=0)
+        mesh = torch.from_numpy(mesh).float()
+        mesh_np = mesh.detach().numpy()
+
+        for sigma in [sigmas[0], sigmas[-1]]:
+            scores = teacher.score(mesh, sigma).detach().numpy()
+            plt.grid(False)
+            plt.axis('off')
+            plt.quiver(mesh_np[:, 0], mesh_np[:, 1], scores[:, 0], scores[:, 1], width=0.005)
+            plt.title('Scores (sigma={:.2f})'.format(sigma))
+            plt.axis('square')
+            if savefig is not None:
+                plt.savefig(savefig + "/scores_sigma_{:.2f}.png".format(sigma), bbox_inches='tight')
+                plt.close()
+            else:
+                plt.show()
+
+    def test(self):
+        self.annealed_sampling_exp()
