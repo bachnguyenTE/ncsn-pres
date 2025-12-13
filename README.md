@@ -1,3 +1,64 @@
+# NCSN Reproduction and Extension - Evaluation
+
+This repository contains the code for the evaluation of the "Generative Modeling by Estimating Gradients of the Data Distribution" paper. It is based on the [official implementation](https://github.com/ermongroup/ncsn).
+
+## Contributions
+
+The main focus of this project was to reproduce the toy experiments and extend them to a more complex 2D distribution (Ring of Gaussians) to verify the claims about the effectiveness of Annealed Langevin Dynamics.
+
+### Key Changes
+- **Refactoring**: The `gaussians_mixture_example.ipynb` notebook was refactored to use reusable functions for training (`train_langevin_model`, `train_annealed_langevin_model`) and visualization (`visualize_langevin_model`, `visualize_annealed_langevin_model`). This makes the code cleaner and allows for easy experimentation with new datasets.
+- **New Dataset**: Implemented a "Ring" dataset in `GMMDist` and `GMMDistAnneal` classes. This dataset consists of 8 Gaussians arranged in a circle, providing a harder challenge for mode mixing compared to the simple 2-Gaussian mixture.
+- **Visualization**: Added GIF generation to visualize the score fields across different noise scales.
+
+## How to Run Experiments
+
+The primary experiments are contained in the Jupyter Notebook `gaussians_mixture_example.ipynb`.
+
+### Prerequisites
+Ensure you have the following dependencies installed:
+- PyTorch
+- Matplotlib
+- Seaborn
+- NumPy
+- ImageIO
+- TQDM
+
+### Steps
+1. Open `gaussians_mixture_example.ipynb` in VS Code or Jupyter Lab.
+2. Run the cells sequentially.
+3. The notebook will:
+    - Train a standard Score Matching model on the 2-Gaussian dataset.
+    - Visualize the results (density, samples, vector fields).
+    - Train an NCSN (Annealed) model on the 2-Gaussian dataset.
+    - Visualize the results and generate `annealed_scores_2gauss.gif`.
+    - Repeat the process for the **Ring Dataset**, generating `annealed_scores_ring.gif`.
+
+## Code Evaluation
+
+### Copied vs. Contributed
+- **Copied**: The core project structure (`main.py`, `runners/`, `models/`, `configs/`) is preserved from the original repository to maintain compatibility and context. The base logic for score matching loss (`dsm_score_estimation`) and Langevin dynamics (`langevin_dynamics`) was adapted from the original toy examples.
+- **Contributed**:
+    - The `GMMDist` and `GMMDistAnneal` classes were significantly updated to support multiple distribution types (`2gauss`, `ring`) dynamically.
+    - The training loops were encapsulated into functions to support multiple experiments in a single notebook.
+    - The Ring dataset experiment is a new addition.
+    - GIF generation code was added.
+
+### Reproduction of Results
+- **2 Gaussians**: We successfully reproduced the results showing that standard Langevin dynamics can handle simple multimodal distributions reasonably well, but Annealed Langevin dynamics provides better coverage and mixing.
+- **Ring Dataset**: We demonstrated that standard Langevin dynamics fails to mix between the 8 modes of the ring, often getting stuck in a subset of modes. In contrast, Annealed Langevin dynamics successfully samples from all modes, confirming the paper's claims about the necessity of noise annealing for complex multimodal distributions.
+
+## Discussion
+
+### Coding Experience
+The experience involved understanding the core principles of Score-Based Generative Modeling. Refactoring the code into modular functions was crucial for running comparative experiments efficiently. Working with the score function vector fields provided intuitive insights into how the model learns to push samples towards high-density regions.
+
+### Challenges
+- **Mode Collapse**: One of the main challenges was observing mode collapse in the standard Langevin dynamics on the Ring dataset. This confirmed the theoretical limitations discussed in the paper.
+- **Hyperparameter Tuning**: Getting the annealing schedule and step sizes right for the Ring dataset required some experimentation to ensure the model could bridge the gaps between modes.
+
+---
+
 # Generative Modeling by Estimating Gradients of the Data Distribution
 
 This repo contains the official implementation for the NeurIPS 2019 paper 
